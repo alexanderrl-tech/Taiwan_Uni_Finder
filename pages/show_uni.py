@@ -1,14 +1,12 @@
 import sqlite3
 
 import streamlit as st
-from header import app_header
 
 DB_FILE = "sql/TwUni_Finder.db"
 PAGE_SIZE = 10
 LEVELS = ["Junior College", "Bachelor", "Master", "Ph.D."]
 
 st.set_page_config(page_title="Programs", page_icon="🎓", layout="wide")
-# app_header()
 col_title, col_back = st.columns([6, 1.2], vertical_alignment="center")
 col_title.title("Programs in Taiwan")
 if col_back.button("← Home", width="stretch"):
