@@ -39,7 +39,7 @@ with col1:
 #         st.switch_page("pages/universities.py")
 
 with col3:
-    if st.button("Add Student", use_container_width=True):
+    if st.button("Add Alumni", use_container_width=True):
         st.switch_page("pages/add_student.py")
 
 
@@ -63,7 +63,7 @@ cursor.execute("""
 students = cursor.fetchall()
 
 head_left, head_right = st.columns([6, 1], vertical_alignment="center")
-head_left.subheader("Latest students")
+head_left.subheader("Latest Alumni")
 
 if students:
     if head_right.button("See More", key="see_more_students", width="stretch"):

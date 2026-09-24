@@ -7,7 +7,7 @@ connection = sqlite3.connect("sql/TwUni_Finder.db")
 cursor = connection.cursor()
 
 st.set_page_config(
-    page_title="Add Student",
+    page_title="Add Alumni",
     page_icon="🎓",
     layout="wide"
 )
@@ -20,11 +20,38 @@ def load_thumbnail(path, size=(300, 450)):
 
 # app_header()
 col_title, col_back = st.columns([6, 1.2], vertical_alignment="center")
-col_title.title("Edit Student")
+col_title.title("Edit Alumni")
 if col_back.button("← Home", width="stretch"):
     st.switch_page("home.py")
 # st.title("Edit Student")
 # st.write("Share your information to be featured on the student page.")
+
+# STYLE
+st.markdown("""
+<style>
+.st-key-submit_alumni_btn button {
+    background-color: #28A745 !important;
+    color: white !important;
+    border: none !important;
+}
+.st-key-submit_alumni_btn button:hover {
+    background-color: #1E7E34 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+.st-key-delete_btn button {
+    background-color: #DC3545 !important;
+    color: white !important;
+    border: none !important;
+}
+.st-key-delete_btn button:hover {
+    background-color: #B02A37 !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.divider()
 
@@ -35,11 +62,10 @@ st.divider()
 # use get not pop so the value will still be there to be rechecked every field update or action
 student_id = st.session_state.get("selected_student")
 cursor.execute("""
-    SELECT name, affiliation, major, degree, about, interests,
-        preferred_degree, preferred_field, photo_path
+    SELECT name, affiliation, major, degree, about, photo_path
     FROM students WHERE id = ?
 """, (student_id,))
-dbname, dbaffiliation, dbmajor, dbdegree, dbabout, dbinterests, dbpreferred_degree, dbpreferred_field, dbphoto_path = cursor.fetchone()
+dbname, dbaffiliation, dbmajor, dbdegree, dbabout, dbphoto_path = cursor.fetchone()
 
 st.subheader("Personal Information")
 
@@ -95,46 +121,71 @@ about = st.text_area(
 # Academic Interests
 # -------------------------
 
-st.subheader("Academic Interests")
-INTEREST_OPTIONS = [
-        "Artificial Intelligence",
-        "Machine Learning",
-        "Computer Vision",
-        "Natural Language Processing",
-        "Robotics",
-        "Data Science",
-        "Software Engineering",
-        "Cybersecurity",
-        "Computer Networks",
-        "Other"
-    ]
-interests = st.multiselect(
-    "Select your interests",
-    INTEREST_OPTIONS,
-    default=[i for i in (dbinterests or "").split(", ") if i in INTEREST_OPTIONS]
-)
+# st.subheader("Academic Interests")
+# INTEREST_OPTIONS = [
+#     "Agriculture & Forestry",
+#     "Architecture",
+#     "Business & Management",
+#     "Communication & Journalism",
+#     "Computer Science & IT",
+#     "Culinary Arts",
+#     "Economics & Finance",
+#     "Education",
+#     "Engineering",
+#     "Environmental Science",
+#     "Fashion Design",
+#     "Film & Media Studies",
+#     "Fine Arts & Design",
+#     "History",
+#     "Hospitality & Tourism",
+#     "International Relations / International Studies",
+#     "Law",
+#     "Linguistics",
+#     "Literature & Languages",
+#     "Marine Science / Oceanography",
+#     "Mathematics & Statistics",
+#     "Medicine & Health Sciences",
+#     "Music & Performing Arts",
+#     "Natural Sciences (Physics, Chemistry, Biology)",
+#     "Nursing & Allied Health",
+#     "Philosophy",
+#     "Psychology",
+#     "Public Administration / Public Policy",
+#     "Public Health",
+#     "Religious Studies / Theology",
+#     "Social Sciences (Sociology, Political Science, Anthropology)",
+#     "Sports Science / Kinesiology",
+#     "Urban Planning",
+#     "Veterinary Science",
+#     "Other"
+#     ]
+# interests = st.multiselect(
+#     "Select your interests",
+#     INTEREST_OPTIONS,
+#     default=[i for i in (dbinterests or "").split(", ") if i in INTEREST_OPTIONS]
+# )
 
-# -------------------------
-# Study Goal
-# -------------------------
+# # -------------------------
+# # Study Goal
+# # -------------------------
 
-st.subheader("Study Goal")
-PREF_DEGREE = [
-        "Bachelor's",
-        "Master's",
-        "Doctorate"
-    ]
-preferred_degree = st.selectbox(
-    "Degree you are interested in",
-    PREF_DEGREE,
-    index=PREF_DEGREE.index(dbpreferred_degree) if dbpreferred_degree in PREF_DEGREE else 0
-)
+# st.subheader("Study Goal")
+# PREF_DEGREE = [
+#         "Bachelor's",
+#         "Master's",
+#         "Doctorate"
+#     ]
+# preferred_degree = st.selectbox(
+#     "Degree you are interested in",
+#     PREF_DEGREE,
+#     index=PREF_DEGREE.index(dbpreferred_degree) if dbpreferred_degree in PREF_DEGREE else 0
+# )
 
-preferred_field = st.text_input(
-    "Preferred field / major",
-    value = dbpreferred_field,
-    placeholder="e.g. Artificial Intelligence"
-)
+# preferred_field = st.text_input(
+#     "Preferred field / major",
+#     value = dbpreferred_field,
+#     placeholder="e.g. Artificial Intelligence"
+# )
 
 # -------------------------
 # Submit
@@ -142,40 +193,53 @@ preferred_field = st.text_input(
 
 st.divider()
 
-if st.button("Submit Student", type="primary", use_container_width=True):
+col1, col2, col3 = st.columns([1, 2, 1])
 
-    if not name:
-        st.error("Please enter your name.")
 
-    elif not affiliation:
-        st.error("Please enter your affiliation.")
+with col1:
+    if st.button("Submit Alumni", type="primary", use_container_width=True, key="submit_alumni_btn"):
+        if not name:
+            st.error("Please enter your name.")
 
-    else:
-        try:
-            if new_photo:
-                new_photo_path = f"uploads/students/{student_id}.jpg"
+        elif not affiliation:
+            st.error("Please enter your affiliation.")
 
-                with open(new_photo_path, "wb") as f:
-                    f.write(new_photo.getbuffer())
-            else:
-                new_photo_path = f"bg waterfall.jpg"
+        else:
+            try:
+                if new_photo:
+                    new_photo_path = f"uploads/students/{student_id}.jpg"
 
-            cursor.execute("""
-                UPDATE students
-                SET name = ?, affiliation = ?, major = ?, degree = ?,
-                    about = ?, interests = ?, preferred_degree = ?,
-                    preferred_field = ?, photo_path = ?
-                WHERE id = ?
-            """, (
-                name, affiliation, major, degree, about,
-                ", ".join(interests), preferred_degree,
-                preferred_field, new_photo_path, student_id
-            ))
+                    with open(new_photo_path, "wb") as f:
+                        f.write(new_photo.getbuffer())
+                else:
+                    # lazy change
+                    # new_photo_path = f"bg waterfall.jpg" 
+                    new_photo_path = f"uploads/students/{student_id}.jpg"
 
-            connection.commit()
+                cursor.execute("""
+                    UPDATE students
+                    SET name = ?, affiliation = ?, major = ?, degree = ?,
+                        about = ?, photo_path = ?
+                    WHERE id = ?
+                """, (
+                    name, affiliation, major, degree, about
+                    , new_photo_path, student_id
+                ))
 
-            st.session_state["flash"] = "Student information submitted!"
-            st.switch_page("home.py")
+                connection.commit()
 
-        except Exception as e:
-            st.error(f"Failed to save student information: {e}")
+                st.session_state["flash"] = "Alumni information submitted!"
+                st.switch_page("home.py")
+
+            except Exception as e:
+                st.error(f"Failed to save alumni information: {e}")
+        pass
+
+with col3:
+    if st.button("Delete", type="secondary", use_container_width=True, key="delete_btn"):
+        cursor.execute("""
+                    DELETE FROM students WHERE id = ?
+                """, (student_id,))
+        connection.commit()
+        st.session_state["flash"] = "Delete successful!"
+        st.switch_page("home.py")
