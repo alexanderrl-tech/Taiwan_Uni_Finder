@@ -28,6 +28,42 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+<style>
+[class*="st-key-card_container_"] {
+    height: 480px;
+}
+[class*="st-key-card_container_"] [data-testid="stVerticalBlockBorderWrapper"] {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.alumni-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 2.6em;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+.alumni-degree {
+    color: #A0A0A0;
+    margin-bottom: 0.25rem;
+}
+.alumni-role {
+    color: #A0A0A0;
+    margin-bottom: 1rem;
+    min-height: 1.5em;  /* keeps spacing consistent even if job_title is empty */
+}
+.alumni-spacer {
+    flex-grow: 1;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # --- Top navigation ---
 col1, col2, col3 = st.columns([6, 1.5, 1.2])
 
@@ -55,7 +91,7 @@ cursor = connection.cursor()
 # rowid works as an ID even if your table has no explicit id column
 HOME_LIMIT = 4
 cursor.execute("""
-    SELECT rowid, name, degree, preferred_degree, photo_path
+    SELECT rowid, name, major, degree, job_title, photo_path
     FROM students
     ORDER BY rowid DESC
     LIMIT ?
@@ -74,18 +110,20 @@ else:
 COLS = 4
 cols = st.columns(COLS)
 
-for i, (student_id, name, degree, preferred_degree, photo_path) in enumerate(students):
+for i, (student_id, name, major, degree, job_title, photo_path) in enumerate(students):
     with cols[i % COLS]:
-        with st.container(border=True):
+        with st.container(border=True, key=f"card_container_{student_id}"):
             if photo_path and os.path.exists(photo_path):
                 st.image(load_thumbnail(photo_path), width=100)
             else:
                 st.markdown("## 🎓")
                 st.caption("No photo")
 
-            st.subheader(name)
-            st.caption(degree)
-            st.caption(preferred_degree)
+            st.markdown(f'<div class="alumni-name">{name}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="alumni-degree">{degree or ""} of {major or ""}</div> ', unsafe_allow_html=True)
+            st.markdown(f'<div class="alumni-role">{job_title or ""}</div>', unsafe_allow_html=True)
+
+            st.markdown('<div class="alumni-spacer"></div>', unsafe_allow_html=True)
 
             if st.button("Show detail", key=f"detail_{student_id}", width="stretch"):
                 st.session_state["selected_student"] = student_id

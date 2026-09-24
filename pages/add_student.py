@@ -81,6 +81,16 @@ degree = st.selectbox(
     ]
 )
 
+job_title = st.text_input(
+    "Job Title",
+    placeholder="e.g. Software Engineer"
+)
+
+company = st.text_input(
+    "Company",
+    placeholder="e.g. Google"
+)
+
 # -------------------------
 # About
 # -------------------------
@@ -177,11 +187,11 @@ if st.button("Add Alumni", type="primary", use_container_width=True, key="add_al
         try:
             cursor.execute("""
                 INSERT INTO students (
-                    name, affiliation, major, degree, about, photo_path
+                    name, affiliation, major, degree, job_title, company, about, photo_path
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, (
-                name, affiliation, major, degree, about, "assets/no_image_placeholder.png"
+                name, affiliation, major, degree, job_title, company, about, "assets/no_image_placeholder.png"
             ))
 
             student_id = cursor.lastrowid

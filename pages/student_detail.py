@@ -62,10 +62,10 @@ st.divider()
 # use get not pop so the value will still be there to be rechecked every field update or action
 student_id = st.session_state.get("selected_student")
 cursor.execute("""
-    SELECT name, affiliation, major, degree, about, photo_path
+    SELECT name, affiliation, major, degree, job_title, company, about, photo_path
     FROM students WHERE id = ?
 """, (student_id,))
-dbname, dbaffiliation, dbmajor, dbdegree, dbabout, dbphoto_path = cursor.fetchone()
+dbname, dbaffiliation, dbmajor, dbdegree, dbjob_title, dbcompany, dbabout, dbphoto_path = cursor.fetchone()
 
 st.subheader("Personal Information")
 
@@ -102,6 +102,18 @@ degree = st.selectbox(
     "Current Degree",
     DEGREES,
     index=DEGREES.index(dbdegree) if dbdegree in DEGREES else 0
+)
+
+job_title = st.text_input(
+    "Job Title",
+    value=dbjob_title,
+    placeholder="e.g. Software Engineer"
+)
+
+company = st.text_input(
+    "Company",
+    value=dbcompany,
+    placeholder="e.g. Google"
 )
 
 # -------------------------
@@ -219,11 +231,11 @@ with col1:
                 cursor.execute("""
                     UPDATE students
                     SET name = ?, affiliation = ?, major = ?, degree = ?,
-                        about = ?, photo_path = ?
+                    job_title = ?, company = ?, about = ?, photo_path = ?
                     WHERE id = ?
                 """, (
-                    name, affiliation, major, degree, about
-                    , new_photo_path, student_id
+                    name, affiliation, major, degree,
+                    job_title, company, about, new_photo_path, student_id
                 ))
 
                 connection.commit()
