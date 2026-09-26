@@ -1,6 +1,8 @@
 import sqlite3
 
 import streamlit as st
+import folium
+from streamlit_folium import st_folium
 
 DB_FILE = "sql/TwUni_Finder.db"
 PAGE_SIZE = 10
@@ -17,6 +19,13 @@ conn = sqlite3.connect(DB_FILE)
 
 if "prog_page" not in st.session_state:
     st.session_state["prog_page"] = 1
+
+if "selected_uni_id" not in st.session_state:
+    st.session_state["selected_uni_id"] = None
+
+
+def select_uni(uni_id):
+    st.session_state["selected_uni_id"] = uni_id
 
 
 def reset_page():
@@ -119,36 +128,63 @@ pager("top", pages)
 
 rows = conn.execute(f"""
     SELECT p.program_name, u.name, u.type, u.region,
-           p.field, p.levels, p.scholarship, p.website_url
+           p.field, p.levels, p.scholarship, p.website_url,
+           u.id, u.lat, u.lng
     {FROM_SQL} {where_sql}
     ORDER BY u.name, p.program_name
     LIMIT ? OFFSET ?
 """, params + [PAGE_SIZE, (page - 1) * PAGE_SIZE]).fetchall()
 
-for program, uni, utype, region, field, levels, scholarship, url in rows:
-    with st.container(border=True):
-        c1, c2, c3, c4 = st.columns([4, 3, 2.5, 1.5], vertical_alignment="center")
+PANEL_HEIGHT = 650  # shared height so list + map line up and each scrolls independently
 
-        with c1:
-            st.markdown(f"**{program}**")
-            st.caption(uni)
+col_list, col_map = st.columns([2, 3])
 
-        with c2:
-            st.write(field or "—")
-            st.caption(levels)
+# ---------- left: narrower, vertically-stacked list of cards ----------
+with col_list:
+    list_panel = st.container(height=PANEL_HEIGHT, border=False)
+    with list_panel:
+        for program, uni, utype, region, field, levels, scholarship, url, uni_id, lat, lng in rows:
+            with st.container(border=True):
+                st.markdown(f"**{program}**")
+                st.caption(uni)
+                st.write(field or "—")
+                st.caption(levels)
+                st.write(f"📍 {region}" + (f" · {utype}" if utype else ""))
+                if scholarship:
+                    st.caption(f"🏅 {scholarship} scholarship(s) listed")
 
-        with c3:
-            st.write(f"📍 {region}")
-            st.caption(utype or "")
-            if scholarship:
-                st.caption(f"🏅 {scholarship} scholarship(s) listed")
+                b1, b2 = st.columns(2)
+                with b1:
+                    if url:
+                        link = url if url.startswith("http") else "https://" + url
+                        st.link_button("Website", link, width="stretch")
+                    else:
+                        st.caption("No website")
+                with b2:
+                    if lat is not None and lng is not None:
+                        st.button("📍 Map", key=f"map_{uni_id}_{program}",
+                                   on_click=select_uni, args=(uni_id,), width="stretch")
 
-        with c4:
-            if url:
-                if not url.startswith("http"):
-                    url = "https://" + url
-                st.link_button("Website", url, width="stretch")
-            else:
-                st.caption("No website listed")
+# ---------- right: map of the currently selected university ----------
+with col_map:
+    st.subheader("📍 Location")
+
+    selected_id = st.session_state["selected_uni_id"]
+    selected = next((r for r in rows if r[8] == selected_id), None) if selected_id else None
+
+    if selected and selected[9] is not None and selected[10] is not None:
+        _, uni, *_rest, lat, lng = selected
+        m = folium.Map(location=[lat, lng], zoom_start=14)
+        folium.Marker([lat, lng], popup=uni, tooltip=uni).add_to(m)
+    else:
+        # default view: whole of Taiwan, with pins for every uni on this page that has coordinates
+        m = folium.Map(location=[23.7, 121.0], zoom_start=7)
+        for r in rows:
+            uni, r_lat, r_lng = r[1], r[9], r[10]
+            if r_lat is not None and r_lng is not None:
+                folium.Marker([r_lat, r_lng], tooltip=uni).add_to(m)
+        st.caption("Click \"📍 Map\" on a program to zoom to its university.")
+
+    st_folium(m, width=None, height=PANEL_HEIGHT - 60, key="uni_map")
 
 pager("bottom", pages)
